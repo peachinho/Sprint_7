@@ -1,0 +1,9 @@
+{
+  "folders": [
+    { "name": "Sprint_7", "path": "." }
+  ],
+  "settings": {
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": ["tests"]
+  }
+}
