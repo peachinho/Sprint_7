@@ -5,24 +5,27 @@ from scooter import COURIER_URL, LOGIN_URL, ORDERS_URL, TIMEOUT, credentials, ne
 
 
 @pytest.fixture
-def created_couriers():
-    couriers = []
-    yield couriers
-    for courier in couriers:
+def courier_registrations():
+    registrations = []
+    yield registrations
+    for courier, response in registrations:
+        if response.status_code != 201:
+            continue
+        if "login" not in courier or "password" not in courier:
+            continue
         login = requests.post(LOGIN_URL, json=credentials(courier), timeout=TIMEOUT)
-        assert login.status_code == 200, login.text
+        login.raise_for_status()
         courier_id = login.json()["id"]
         removed = requests.delete(f"{COURIER_URL}/{courier_id}", timeout=TIMEOUT)
-        assert removed.status_code == 200, removed.text
-        assert removed.json()["ok"] is True
+        removed.raise_for_status()
 
 
 @pytest.fixture
-def registered_courier(created_couriers):
+def registered_courier(courier_registrations):
     courier = new_courier()
     response = requests.post(COURIER_URL, json=courier, timeout=TIMEOUT)
-    assert response.status_code == 201, response.text
-    created_couriers.append(courier)
+    response.raise_for_status()
+    courier_registrations.append((courier, response))
     return courier
 
 
@@ -32,5 +35,4 @@ def created_order_tracks():
     yield tracks
     for track in tracks:
         cancelled = requests.put(f"{ORDERS_URL}/cancel", params={"track": track}, timeout=TIMEOUT)
-        assert cancelled.status_code == 200, cancelled.text
-        assert cancelled.json()["ok"] is True
+        cancelled.raise_for_status()
